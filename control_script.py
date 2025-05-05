@@ -44,8 +44,10 @@ def get_first_double(my_string):
     print(my_string)
     if (my_string is None):
         return 0;
-    numeric_const_pattern = '[-+]? (?: (?: \d* \. \d+ ) | (?: \d+ \.? ) )(?: [Ee] [+-]? \d+ ) ?'
+    numeric_const_pattern = '[-+]? (?: (?: \\d* \\. \\d+ ) | (?: \\d+ \\.? ) )(?: [Ee] [+-]? \\d+ ) ?'
     rx = re.compile(numeric_const_pattern, re.VERBOSE)
+    if any(char.isdigit() for char in my_string) == False:
+        return 0
     var = rx.findall(my_string)[0]
     return float(var)
 
@@ -80,7 +82,9 @@ ex_bounds = bounds(0, 0, 100, 100)
 
 #gets current position and prints the result
 
-image_folder = "insert_file_name" 
+#
+image_folder = "C:\\Users\\Transferstage\\Transfer_Stage_Script\\transfer_stage_script\\exfoliation_images\\" 
+image_name = "flake_1"
 command = "" 
 isconnected = False
 iscalibrated = False
@@ -89,24 +93,36 @@ iscalibrated = False
 x = 0
 y = 0
 #objective base field of view
-fov = 100.0
+fov = 3.0
 #object magnification
 mag = 5
 #buffer for image range
 buffer = 0
+retcode = ""
 
 
 while command != "1":
     command = input("1. quit\n2. calibrate")
     if command == "test":
-        print(get_first_double(Send('GETPOSX\n')))
-        print(",")
-        print(get_first_double(Send('GETPOSY\n')))
-        print("\n\n")
+        
+        #Send("AUTFOC\n")
 
         #takes picture and saves it to image_folder
-        Send("PIC:" + image_folder + "\n")
-
+        print(get_first_double(Send("GETPOSX")))
+        x = 0
+        image_name = "(" + str(x) + ", " + str(y) + ")"
+        location = "PIC:" + image_folder + image_name + "\n"
+        time.sleep(5)
+        Send(location)
+        #updates x position:
+        x += fov/mag
+        command = "SETPOSX" + str(float(x)) + "\n"
+        print(command)
+        retcode = Send("SETPOSX5.0\n")
+        print(retcode)
+        if "Unknown" in retcode:
+            print("failure")
+            #break
         #sets pos to new coordinates based on input
         x = input("input x:")
         y = input("input y:")
@@ -118,9 +134,15 @@ while command != "1":
         if Send('GETPOSX\n') == "":
             print("Transfer stage not connected\n")
             break
+        else:
+            isconnected = True
         #set stage height, position, Objective height, focus, vacume power, stage rotation and transfer arm rotation to defaults
         #breaks if any of these fail
-
+        Send("SETPOSX0")
+        Send("SETPOSY0")
+        #Send("AUTFOC\n")
+        
+        iscalibrated = True
         #input coordinates of the corners of the exfoliation
 
     if command == "3": #
@@ -132,17 +154,29 @@ while command != "1":
             break
         
         #set objective to 5x
-        Send("SETOBJ2")
-        mag = get_first_double(Send('GETMAG\n'))
+        #Send("SETOBJ2")
+        x = ex_bounds.xmin
+        y = ex_bounds.ymin
+        #mag = get_first_double(Send('GETMAG\n'))
+        #print(mag + "\n")
         while y <= ex_bounds.ymax + buffer:
             #captures image and stores it
-            Send("PIC:" + image_folder + "\n")
+            image_name = "(" + str(x) + ", " + str(y) + ")"
+            location = "PIC:" + image_folder + image_name + "\n"
+            Send(location)
             #updates x position:
             x += fov/mag
-            Send("SETPOSX" + x + "\n")
+            retcode = Send("SETPOSX" + str(x) + "\n")
+            if retcode == "Unknown command":
+                break
             if x >= ex_bounds.xmax + buffer:
                 x = ex_bounds.xmin
                 y += fov/mag
+                retcode = Send("SETPOSY" + str(y) + "\n")
+                if retcode == "Unknown command":
+                    break
+            while get_first_double(Send("GETPOSX")) != float(x) or get_first_double(Send("GETPOSY")) != float(y):
+                time.sleep(.5)
         
         
         
