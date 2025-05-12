@@ -4,8 +4,9 @@ import sys
 import win32pipe, win32file, pywintypes
 import re
 import math
+import random
 
-def Send(data):
+def Send(data, ret):
     try:
         handle = win32file.CreateFile(
         r'\\.\pipe\HQ_server',
@@ -27,7 +28,8 @@ def Send(data):
             result, resp = win32file.ReadFile(handle, 64*1024)
             win32file.CloseHandle(handle)
             msg = resp.decode("utf-8")
-            print(f"message: {msg}")
+            if ret:
+                print(f"message: {msg}")
 
             return msg
 
@@ -41,7 +43,7 @@ def Send(data):
 
 
 def get_first_double(my_string):
-    print(my_string)
+    #print(my_string)
     if (my_string is None):
         return 0;
     numeric_const_pattern = '[-+]? (?: (?: \\d* \\. \\d+ ) | (?: \\d+ \\.? ) )(?: [Ee] [+-]? \\d+ ) ?'
@@ -57,7 +59,45 @@ class bounds:
         bound.xmax = xmax
         bound.ymin = ymin
         bound.ymax = ymax
-        
+
+def setx(x):
+    out = 9999
+    command = "SETPOSX" + str(x) + "\n"
+    #print(command + "\n")
+    while abs(out - x) >= 0.01:
+        Send(command, 0)
+        out = get_first_double(Send("GETPOSX\n", 0))
+        time.sleep(.1)
+    time.sleep(.5)
+    return  
+def sety(y):
+    out = 9999
+    command = "SETPOSY" + str(y) + "\n"
+    #print(command + "\n")
+    while abs(out - y) >= 0.01:
+        Send(command, 0)
+        out = get_first_double(Send("GETPOSY\n", 0))
+        time.sleep(.1)
+    time.sleep(.5)
+    return
+
+def capture(image_folder, image_name, is_wide):
+    while is_wide:
+        command = "WIDE:" + image_folder + image_name + "\n"
+        ret = Send(command, 1)
+        if image_name in ret:
+            print("image saved at " + image_folder + image_name + "\n")
+            return
+        time.sleep(.1)
+
+    while is_wide == 0:
+        command = "PIC:" + image_folder + image_name + "\n"
+        ret = Send(command, 1)
+        if image_name in ret:
+            print("image saved at " + image_folder + image_name + "\n")
+            return
+        time.sleep(.1)
+
 
 #rotates the chip sp it is paralelle with the coordinate system and returns xmax and ymax
 def align_chip(bounds):
@@ -78,7 +118,7 @@ def zero_platform(x0,y0):
 #main script
 
 #chip bounds [top left, top right, bottom left]
-ex_bounds = bounds(0, 0, 100, 100)
+ex_bounds = bounds(0, 0, 5, 5)
 
 #gets current position and prints the result
 
@@ -93,7 +133,7 @@ iscalibrated = False
 x = 0
 y = 0
 #objective base field of view
-fov = 3.0
+fov = 7.0
 #object magnification
 mag = 5
 #buffer for image range
@@ -102,44 +142,22 @@ retcode = ""
 
 
 while command != "1":
-    command = input("1. quit\n2. calibrate")
-    if command == "test":
-        
-        #Send("AUTFOC\n")
-
-        #takes picture and saves it to image_folder
-        print(get_first_double(Send("GETPOSX")))
-        x = 0
-        image_name = "(" + str(x) + ", " + str(y) + ")"
-        location = "PIC:" + image_folder + image_name + "\n"
-        time.sleep(5)
-        Send(location)
-        #updates x position:
-        x += fov/mag
-        command = "SETPOSX" + str(float(x)) + "\n"
-        print(command)
-        retcode = Send("SETPOSX5.0\n")
-        print(retcode)
-        if "Unknown" in retcode:
-            print("failure")
-            #break
-        #sets pos to new coordinates based on input
-        x = input("input x:")
-        y = input("input y:")
-        Send('SETPOSX' + str(x) + "\n")
-        Send('SETPOSY' + str(y) + "\n")
-
+    command = input("1. quit\n2. calibrate\n")
+    if command == "t":
+        setx(0)
+        sety(0)
+        setx(1)
+        sety(1)
+       
     if command == "2": #prepares stage for exfoliation
         #checks connects to stage
-        if Send('GETPOSX\n') == "":
+        if Send('GETPOSX\n', 1) == "":
             print("Transfer stage not connected\n")
             break
         else:
             isconnected = True
         #set stage height, position, Objective height, focus, vacume power, stage rotation and transfer arm rotation to defaults
         #breaks if any of these fail
-        Send("SETPOSX0")
-        Send("SETPOSY0")
         #Send("AUTFOC\n")
         
         iscalibrated = True
@@ -154,29 +172,26 @@ while command != "1":
             break
         
         #set objective to 5x
-        #Send("SETOBJ2")
+        #Send("SETOBJ2", 1)
         x = ex_bounds.xmin
+        setx(x)
         y = ex_bounds.ymin
-        #mag = get_first_double(Send('GETMAG\n'))
+        sety(y)
+        delta = fov/mag
         #print(mag + "\n")
         while y <= ex_bounds.ymax + buffer:
             #captures image and stores it
-            image_name = "(" + str(x) + ", " + str(y) + ")"
-            location = "PIC:" + image_folder + image_name + "\n"
-            Send(location)
+            image_name = "(" + str(round(x, 4)) + ", " + str(round(y, 4)) + ")"
+            capture(image_folder, image_name, 1)
             #updates x position:
-            x += fov/mag
-            retcode = Send("SETPOSX" + str(x) + "\n")
-            if retcode == "Unknown command":
-                break
-            if x >= ex_bounds.xmax + buffer:
-                x = ex_bounds.xmin
-                y += fov/mag
-                retcode = Send("SETPOSY" + str(y) + "\n")
-                if retcode == "Unknown command":
-                    break
-            while get_first_double(Send("GETPOSX")) != float(x) or get_first_double(Send("GETPOSY")) != float(y):
-                time.sleep(.5)
+            x += delta
+            setx(x)
+            if x >= ex_bounds.xmax + buffer or x <= ex_bounds.xmin - buffer:
+                image_name = "(" + str(round(x, 4)) + ", " + str(round(y, 4)) + ")"
+                capture(image_folder, image_name, 1)
+                delta *= -1
+                y += abs(delta)
+                sety(y)
         
         
         
