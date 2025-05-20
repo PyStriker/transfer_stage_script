@@ -98,6 +98,12 @@ def capture(image_folder, image_name, is_wide):
             return
         time.sleep(.1)
 
+def process_image(file_location):
+    type = ""
+    #run image at file location through image model
+    #save image to specified location based on type
+    #return type
+    return type
 
 #rotates the chip sp it is paralelle with the coordinate system and returns xmax and ymax
 def align_chip(bounds):
@@ -115,6 +121,37 @@ def align_chip(bounds):
 def zero_platform(x0,y0):
     #sets origin to x0, y0
     return 0
+
+def command_test():
+    ret = ""
+    print("testing set commands:\n\n")
+    print("command: SETPOSX1.0\n")
+    print(Send("SETPOSX1.0\n"))
+    print("command: SETPOSY1.0\n")
+    print(Send("SETPOSY1.0\n"))
+    print("command: SETFOC1.0\n")
+    print(Send("SETOBJ1\n"))
+    print("\ntesting get commands:\n\n")
+    print("command: GETPOSX\n")
+    print(Send("GETPOSX\n"))
+    print("command: GETPOSY\n")
+    print(Send("GETPOSY\n"))
+    print("command: GETOBJ\n")
+    print(Send("GETOBJ\n"))
+    print("command: GETMAG\n")
+    print(Send("GETMAG\n"))
+    print("\nCamera commands:\n\n")
+    print("command: PIC:" + image_folder + "\n")
+    print(Send("PIC:" + image_folder + "\n"))
+    print("command: WIDE:" + image_folder + "\n")
+    print(Send("WIDE:" + image_folder + "\n"))
+    print("\nOther Commands:\n\n")
+    print("command: SCANDONE\n")
+    print(Send("SCANDONE\n"))
+    print("command: SAVEPOS:test\n")
+    print(Send("SAVEPOS:test\n"))
+
+
 #main script
 
 #chip bounds [top left, top right, bottom left]
@@ -144,10 +181,7 @@ retcode = ""
 while command != "1":
     command = input("1. quit\n2. calibrate\n")
     if command == "t":
-        setx(0)
-        sety(0)
-        setx(1)
-        sety(1)
+        command_test()
        
     if command == "2": #prepares stage for exfoliation
         #checks connects to stage
