@@ -63,9 +63,9 @@ class bounds:
 def setx(x):
     out = 9999
     command = "SETPOSX" + str(x) + "\n"
-    #print(command + "\n")
+    print("Command:" + command + "\n")
     while abs(out - x) >= 0.01:
-        Send(command, 0)
+        Send(command, 1)
         out = get_first_double(Send("GETPOSX\n", 0))
         time.sleep(.1)
     time.sleep(.5)
@@ -75,7 +75,7 @@ def sety(y):
     command = "SETPOSY" + str(y) + "\n"
     #print(command + "\n")
     while abs(out - y) >= 0.01:
-        Send(command, 0)
+        Send(command, 1)
         out = get_first_double(Send("GETPOSY\n", 0))
         time.sleep(.1)
     time.sleep(.5)
@@ -126,30 +126,44 @@ def command_test():
     ret = ""
     print("testing set commands:\n\n")
     print("command: SETPOSX1.0\n")
-    print(Send("SETPOSX1.0\n"))
+    print(Send("SETPOSX1.0\n", 1))
     print("command: SETPOSY1.0\n")
-    print(Send("SETPOSY1.0\n"))
+    print(Send("SETPOSY1.0\n", 1))
     print("command: SETFOC1.0\n")
-    print(Send("SETOBJ1\n"))
+    print(Send("SETOBJ1\n", 1))
     print("\ntesting get commands:\n\n")
     print("command: GETPOSX\n")
-    print(Send("GETPOSX\n"))
+    print(Send("GETPOSX\n", 1))
     print("command: GETPOSY\n")
-    print(Send("GETPOSY\n"))
+    print(Send("GETPOSY\n", 1))
     print("command: GETOBJ\n")
-    print(Send("GETOBJ\n"))
+    print(Send("GETOBJ\n", 1))
     print("command: GETMAG\n")
-    print(Send("GETMAG\n"))
+    print(Send("GETMAG\n", 1))
     print("\nCamera commands:\n\n")
     print("command: PIC:" + image_folder + "\n")
-    print(Send("PIC:" + image_folder + "\n"))
+    print(Send("PIC:" + image_folder + "\n", 1))
     print("command: WIDE:" + image_folder + "\n")
-    print(Send("WIDE:" + image_folder + "\n"))
+    print(Send("WIDE:" + image_folder + "\n", 1))
     print("\nOther Commands:\n\n")
     print("command: SCANDONE\n")
-    print(Send("SCANDONE\n"))
+    print(Send("SCANDONE\n", 1))
     print("command: SAVEPOS:test\n")
-    print(Send("SAVEPOS:test\n"))
+    print(Send("SAVEPOS:test\n", 1))
+
+def stress_test(command, runs):
+    r = "-"
+    failures = 0
+    fail_msg = Send("null\n", 0)
+    print("Command: " + command)
+    print("iterations: " + str(runs))
+    for i in range(0, runs, 1):
+        r = Send(command, 0)
+        print(r)
+        if fail_msg in str(r):
+            failures += 1
+    print("failure rate: " + str(failures/runs) + "\n")
+    return float(failures)/float(runs)
 
 
 #main script
@@ -180,8 +194,7 @@ retcode = ""
 
 while command != "1":
     command = input("1. quit\n2. calibrate\n")
-    if command == "t":
-        command_test()
+    
        
     if command == "2": #prepares stage for exfoliation
         #checks connects to stage
@@ -197,7 +210,7 @@ while command != "1":
         iscalibrated = True
         #input coordinates of the corners of the exfoliation
 
-    if command == "3": #
+    elif command == "3": #
         if isconnected == False:
             print("Transfer stage is not connected\n")
             break
@@ -226,7 +239,8 @@ while command != "1":
                 delta *= -1
                 y += abs(delta)
                 sety(y)
-        
+    else:
+        stress_test(command, 100)
         
         
         
