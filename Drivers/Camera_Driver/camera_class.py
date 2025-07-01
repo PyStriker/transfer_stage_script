@@ -8,11 +8,12 @@ import time
 class CameraDriver(CameraDriverInterface):
     """
     eays to use microscope cam class
+    cam names: DFK 33UX265 02321829, DFK 33UX265 02321831, DFK 33UX265 42420890, DFK 33UX265 43420252
     """
 
     def __init__(
         self,
-        cam_name="DFK 33UX174 38020321",
+        cam_name="DFK 33UX265 02321829",
         NULL_R=14,
         NULL_G=14,
         NULL_B=14,

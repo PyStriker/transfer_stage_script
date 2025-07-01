@@ -1,4 +1,4 @@
-import win32com.client, command_server
+import win32com.client, command_server, time
 from Drivers.Interfaces.Microscope_Interface import MicroscopeDriverInterface
 
 
@@ -7,12 +7,12 @@ class MicroscopeDriver(MicroscopeDriverInterface):
     an easy way to control the microscope
     """
 
-    def __init__(self):
+    def __init__(self, cli: command_server.PipeClient):
         # Creates an microscope object, only possible if NIS is closed and no other application is using the LV
         self.micro = win32com.client.Dispatch("Nikon.LvMic.nikonLV")
-        self.pipe = command_server.PipeClient()
+        self.cli = cli
         # this line is shit, took 4 hours
-        self.pipe.connect()
+        self.cli.connect()
         self.set_default_values()
 
     def set_default_values(self):
@@ -23,10 +23,11 @@ class MicroscopeDriver(MicroscopeDriverInterface):
         """
         self.lamp_on()
         self.set_lamp_voltage(6.4)
-        self.pipe.send_command('AUTFOC')
+        self.cli.send_command('AUTFOC')
+        time.sleep(10) #until i figure out how to see when auto focus is done
 
     def get_microscope_object(self):
-        return command_server.get_first_double(self.pipe.send_command('GETOBJ'))
+        return command_server.get_first_double(self.cli.send_command('GETOBJ'))
 
     def set_z_height(self, height):
         """
@@ -37,35 +38,35 @@ class MicroscopeDriver(MicroscopeDriverInterface):
         """
         try:
             if -7000 <= height <= 3000:
-                self.pipe.send_command(f'SETZ{height}')
+                self.cli.send_command(f'SETZ{height}')
                 """ check if auto focus is on """
         except:
             print("Already in Focus!")
 
     def get_z_height(self):
-        height = command_server.get_first_double(self.pipe.send_command('GETZ'))
+        height = command_server.get_first_double(self.cli.send_command('GETZ'))
         return height
 
     def lamp_on(self):
-        self.pipe.send_command('LEDON')
+        self.cli.send_command('LEDON')
 
     def lamp_off(self):
         self.pipe.send_command('LEDOFF')
 
     def rotate_nosepiece_forward(self):
-        r = command_server.get_first_double(self.pipe.send_command('GETPOSR'))
+        r = command_server.get_first_double(self.cli.send_command('GETPOSR'))
         new_r = r + 0.0
-        self.pipe.send_command(f"SETPOSR{new_r}")
+        self.cli.send_command(f"SETPOSR{new_r}")
         """ by how much should it rotate"""
 
     def rotate_nosepiece_backward(self):
-        r = command_server.get_first_double(self.pipe.send_command('GETPOSR'))
+        r = command_server.get_first_double(self.cli.send_command('GETPOSR'))
         new_r = r - 0.0
-        self.pipe.send_command(f"SETPOSR{new_r}")
+        self.cli.send_command(f"SETPOSR{new_r}")
         """ by how much should it rotate"""
 
     def set_lamp_voltage(self, voltage: float):
-        self.pipe.send_command(f'LEDPERCENT{voltage}')
+        self.cli.send_command(f'LEDPERCENT{voltage}')
 
     def set_mag(self, mag_idx: int):
         """
@@ -78,7 +79,7 @@ class MicroscopeDriver(MicroscopeDriverInterface):
         5 : 100x 3900µm\n
         """
         if 0 < mag_idx < 6:
-            self.pipe.send_command(f'SETOBJ{mag_idx}')
+            self.cli.send_command(f'SETOBJ{mag_idx}')
         else:
             print(f"Wrong Mag Idx, you gave {mag_idx}, needs to be 1 to 5")
 
@@ -115,10 +116,10 @@ class MicroscopeDriver(MicroscopeDriverInterface):
         #   File "C:\Users\Transfersystem User\.conda\envs\micro\lib\site-packages\win32com\client\dynamic.py", line 197, in __call__
         #     return self._get_good_object_(self._oleobj_.Invoke(*allArgs),self._olerepr_.defaultDispatchName,None)
         # pywintypes.com_error: (-2147352567, 'Exception occurred.', (0, 'Nikon.LvMic.ZDrive.1', '', None, 0, -2147352567), None)
-        val_dict["z_height"] = command_server.get_first_double(self.pipe.send_command('GETZ'))
-        val_dict["nosepiece"] = command_server.get_first_double(self.pipe.send_command('GETPOSR'))
+        val_dict["z_height"] = command_server.get_first_double(self.cli.send_command('GETZ'))
+        val_dict["nosepiece"] = command_server.get_first_double(self.cli.send_command('GETPOSR'))
         val_dict["aperture"] = 0; """ no aperture on microscope """
-        val_dict["light"] = command_server.get_first_double(self.pipe.send_command('GETLED')); """ no get voltage command, GETLED is placeholder"""
+        val_dict["light"] = command_server.get_first_double(self.cli.send_command('GETLED')); """ no get voltage command, GETLED is placeholder"""
         return val_dict
 
 if __name__ == "__main__":

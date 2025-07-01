@@ -21,10 +21,10 @@ class MotorDriver(MotorDriverInterface):
     controls the HQ transfer stage motors
     """
 
-    def __init__(self, dll_path=dll_path):
+    def __init__(self, cli: command_server.PipeClient):
 
-        self.pipe = command_server.PipeClient()
-        self.pipe.connect()
+        self.cli = cli
+        self.cli.connect()
 
         """ calibrate everything to defaults """
 
@@ -35,8 +35,8 @@ class MotorDriver(MotorDriverInterface):
         Returns the Current Position
         """
         # query actual position (4 axes) (unit depends on GetDimensions)
-        x = command_server.get_first_double(self.pipe.send_command('GETPOSX'))
-        y = command_server.get_first_double(self.pipe.send_command('GETPOSY'))
+        x = command_server.get_first_double(self.cli.send_command('GETPOSX'))
+        y = command_server.get_first_double(self.cli.send_command('GETPOSY'))
 
         return (x, y)
 
@@ -48,11 +48,11 @@ class MotorDriver(MotorDriverInterface):
         moveY = c_double(y)
         wait_for_finish = c_bool(wait_for_finish)
 
-        error = self.pipe.send_command(f'SETPOSX{moveX}')
+        error = self.cli.send_command(f'SETPOSX{moveX}')
         if error > 0:
             print("Error: abs_move " + str(error))
             sys.exit()
-        error = self.pipe.send_command(f'SETPOSY{moveY}')
+        error = self.cli.send_command(f'SETPOSY{moveY}')
         if error > 0:
             print("Error: abs_move " + str(error))
             sys.exit()
@@ -69,14 +69,14 @@ class MotorDriver(MotorDriverInterface):
 
         move_dx = c_double(dx)
         move_dy = c_double(dy)
-        x = command_server.get_first_double(self.pipe.send_command('GETPOSX')) + move_dx
-        y = command_server.get_first_double(self.pipe.send_command('GETPOSY')) + move_dy
+        x = command_server.get_first_double(self.cli.send_command('GETPOSX')) + move_dx
+        y = command_server.get_first_double(self.cli.send_command('GETPOSY')) + move_dy
 
-        error = self.pipe.send_command(f'SETPOSX{x}')
+        error = self.cli.send_command(f'SETPOSX{x}')
         if error > 0:
             print("Error: rel_move " + str(error))
             sys.exit()
-        error = self.pipe.send_command(f'SETPOSY{y}')
+        error = self.cli.send_command(f'SETPOSY{y}')
         if error > 0:
             print("Error: rel_move " + str(error))
             sys.exit()
