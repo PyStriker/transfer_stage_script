@@ -1,7 +1,7 @@
 import os
 from Drivers.Interfaces.Motor_Interface import MotorDriverInterface
 from ctypes import *
-import sys, command_server
+import sys, Drivers.PipeClient as PipeClient
 
 file_path = os.path.dirname(__file__)
 try:
@@ -21,7 +21,7 @@ class MotorDriver(MotorDriverInterface):
     controls the HQ transfer stage motors
     """
 
-    def __init__(self, cli: command_server.PipeClient):
+    def __init__(self, cli: PipeClient.PipeClient):
 
         self.cli = cli
         self.cli.connect()
@@ -35,8 +35,8 @@ class MotorDriver(MotorDriverInterface):
         Returns the Current Position
         """
         # query actual position (4 axes) (unit depends on GetDimensions)
-        x = command_server.get_first_double(self.cli.send_command('GETPOSX'))
-        y = command_server.get_first_double(self.cli.send_command('GETPOSY'))
+        x = PipeClient.get_first_double(self.cli.send_command('GETPOSX'))
+        y = PipeClient.get_first_double(self.cli.send_command('GETPOSY'))
 
         return (x, y)
 
@@ -69,8 +69,8 @@ class MotorDriver(MotorDriverInterface):
 
         move_dx = c_double(dx)
         move_dy = c_double(dy)
-        x = command_server.get_first_double(self.cli.send_command('GETPOSX')) + move_dx
-        y = command_server.get_first_double(self.cli.send_command('GETPOSY')) + move_dy
+        x = PipeClient.get_first_double(self.cli.send_command('GETPOSX')) + move_dx
+        y = PipeClient.get_first_double(self.cli.send_command('GETPOSY')) + move_dy
 
         error = self.cli.send_command(f'SETPOSX{x}')
         if error > 0:

@@ -1,4 +1,4 @@
-import win32com.client, command_server, time
+import win32com.client, Drivers.PipeClient as PipeClient, time
 from Drivers.Interfaces.Microscope_Interface import MicroscopeDriverInterface
 
 
@@ -7,7 +7,7 @@ class MicroscopeDriver(MicroscopeDriverInterface):
     an easy way to control the microscope
     """
 
-    def __init__(self, cli: command_server.PipeClient):
+    def __init__(self, cli: PipeClient.PipeClient):
         # Creates an microscope object, only possible if NIS is closed and no other application is using the LV
         self.micro = win32com.client.Dispatch("Nikon.LvMic.nikonLV")
         self.cli = cli
@@ -27,7 +27,7 @@ class MicroscopeDriver(MicroscopeDriverInterface):
         time.sleep(10) #until i figure out how to see when auto focus is done
 
     def get_microscope_object(self):
-        return command_server.get_first_double(self.cli.send_command('GETOBJ'))
+        return PipeClient.get_first_double(self.cli.send_command('GETOBJ'))
 
     def set_z_height(self, height):
         """
@@ -44,7 +44,7 @@ class MicroscopeDriver(MicroscopeDriverInterface):
             print("Already in Focus!")
 
     def get_z_height(self):
-        height = command_server.get_first_double(self.cli.send_command('GETZ'))
+        height = PipeClient.get_first_double(self.cli.send_command('GETZ'))
         return height
 
     def lamp_on(self):
@@ -54,13 +54,13 @@ class MicroscopeDriver(MicroscopeDriverInterface):
         self.pipe.send_command('LEDOFF')
 
     def rotate_nosepiece_forward(self):
-        r = command_server.get_first_double(self.cli.send_command('GETPOSR'))
+        r = PipeClient.get_first_double(self.cli.send_command('GETPOSR'))
         new_r = r + 0.0
         self.cli.send_command(f"SETPOSR{new_r}")
         """ by how much should it rotate"""
 
     def rotate_nosepiece_backward(self):
-        r = command_server.get_first_double(self.cli.send_command('GETPOSR'))
+        r = PipeClient.get_first_double(self.cli.send_command('GETPOSR'))
         new_r = r - 0.0
         self.cli.send_command(f"SETPOSR{new_r}")
         """ by how much should it rotate"""
@@ -116,10 +116,10 @@ class MicroscopeDriver(MicroscopeDriverInterface):
         #   File "C:\Users\Transfersystem User\.conda\envs\micro\lib\site-packages\win32com\client\dynamic.py", line 197, in __call__
         #     return self._get_good_object_(self._oleobj_.Invoke(*allArgs),self._olerepr_.defaultDispatchName,None)
         # pywintypes.com_error: (-2147352567, 'Exception occurred.', (0, 'Nikon.LvMic.ZDrive.1', '', None, 0, -2147352567), None)
-        val_dict["z_height"] = command_server.get_first_double(self.cli.send_command('GETZ'))
-        val_dict["nosepiece"] = command_server.get_first_double(self.cli.send_command('GETPOSR'))
+        val_dict["z_height"] = PipeClient.get_first_double(self.cli.send_command('GETZ'))
+        val_dict["nosepiece"] = PipeClient.get_first_double(self.cli.send_command('GETPOSR'))
         val_dict["aperture"] = 0; """ no aperture on microscope """
-        val_dict["light"] = command_server.get_first_double(self.cli.send_command('GETLED')); """ no get voltage command, GETLED is placeholder"""
+        val_dict["light"] = PipeClient.get_first_double(self.cli.send_command('GETLED')); """ no get voltage command, GETLED is placeholder"""
         return val_dict
 
 if __name__ == "__main__":
