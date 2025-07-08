@@ -11,7 +11,8 @@ import Utils.raster_functions as raster
 import Utils.stitcher_functions as stitcher
 import Utils.upload_functions as uploader
 from Drivers import CameraDriver, MicroscopeDriver, MotorDriver
-from GMMDetector import MaterialDetector
+from Drivers import PipeClient
+from GMM.Model.GMMDetector import Detector
 from GUI import ParameterPicker
 
 # getting the Parameters
@@ -72,13 +73,24 @@ cv2.imwrite(os.path.join(SCAN_DIRECTORY, "flatfield.png"), flatfield)
 with open(scan_meta_path, "w") as fp:
     json.dump(META_DICT, fp, sort_keys=True, indent=4)
 
+# create pipeclient and establish connection
+client = PipeClient()
+while not client.connect():
+    print("Connecting...\n")
+    time.sleep(.5)
+    buffer += 1
+    if buffer > 15:
+        print("connection unsuccessful\n")
+        sys.exit()
+print("Connection successful")    
+
 # Driver Initialization
-motor_driver = MotorDriver()
+motor_driver = MotorDriver(client)
 camera_driver = CameraDriver()
-microscope_driver = MicroscopeDriver()
+microscope_driver = MicroscopeDriver(client)
 
 # Detector Initialization
-model = MaterialDetector(
+model = Detector.MaterialDetector(
     contrast_dict=contrast_params,
     size_threshold=conversion.micrometers_to_pixels(SIZE_THRESHOLD, MAGNIFICATION),
     standard_deviation_threshold=STANDARD_DEVIATION_THRESHOLD,

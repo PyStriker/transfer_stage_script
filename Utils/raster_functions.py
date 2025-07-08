@@ -10,8 +10,8 @@ from Drivers import (
     MotorDriverInterface,
 )
 
-from GMMDetector import MaterialDetector
-from GMMDetector.structures import Flake
+from GMM.Model import GMMDetector as MaterialDetector
+from GMM.Model.GMMDetector.structures import Flake
 
 from .etc_functions import (
     walk_flake_directories,
