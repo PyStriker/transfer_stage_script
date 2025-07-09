@@ -109,9 +109,10 @@ def compress_images(
 
 
 def stitch_image(
+
     picture_directory: str,
-    x_rows: int = 21,
-    y_rows: int = 31,
+    x_rows: int = 6,
+    y_rows: int = 8,
     x_pix_offset: int = 403,
     y_pix_offset: int = 273,
 ):

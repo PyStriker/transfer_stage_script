@@ -62,6 +62,12 @@ def raster_plate_low_magnification(
         camera_settings (dict): The settings of the camera
         microscope_settings (dict): The settings of the microscope
 
+        
+        5X: 0.69789
+        10X: 0.34886
+        20X: 0.17436
+        40X: 0.079391
+        50X: 0.063957
     Returns:
         Tuple[str, str]: The path to the image directory and the path to the metadata directory
     """
@@ -73,13 +79,15 @@ def raster_plate_low_magnification(
     # => 21 rows
     # => 31 columns
 
-    X_STEP = 5
-    Y_STEP = 3.333
+    X_STEP = .7
+    Y_STEP = .5
     WAIT_TIME = 0.2
     MAGNIFICATION = 2.5
+    X_MAX = 2
+    Y_MAX = 2
 
-    ROWS = 21
-    COLUMNS = 31
+    ROWS = 2*X_MAX/X_STEP
+    COLUMNS = 2*Y_MAX/Y_STEP
     NUM_IMAGES = ROWS * COLUMNS
 
     _, image_dir, metadata_dir = _create_folder_structure(scan_directory, MAGNIFICATION)
@@ -100,15 +108,15 @@ def raster_plate_low_magnification(
 
     curr_idx = 0
     start_time = time.time()
-    for row_idx in range(ROWS):
+    for row_idx in range(int(ROWS)):
         # this implements a snake-like pattern, its faster
-        col = range(COLUMNS)
+        col = range(int(COLUMNS))
         if row_idx % 2 == 1:
             col = reversed(col)
 
         for col_idx in col:
             curr_idx += 1
-            motor_driver.abs_move(row_idx * X_STEP, col_idx * Y_STEP)
+            motor_driver.abs_move(row_idx * X_STEP - X_MAX, col_idx * Y_STEP - Y_MAX)
             time.sleep(WAIT_TIME)
 
             # give a status update

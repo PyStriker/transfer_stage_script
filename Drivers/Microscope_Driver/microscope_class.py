@@ -1,4 +1,4 @@
-import win32com.client, Drivers.PipeClient as PipeClient, time
+import win32com.client, Drivers.PipeClient as PipeClient, time, sys
 from Drivers.Interfaces.Microscope_Interface import MicroscopeDriverInterface
 
 
@@ -21,14 +21,17 @@ class MicroscopeDriver(MicroscopeDriverInterface):
         self.lamp_on()
         self.set_lamp_voltage(6.4)
         self.set_mag(1)
-        self.cli.send_command("SETPOSF1.1")
         buf = 0
+        """
+        #self.cli.send_command("SETPOSF1.1")
+        
         while(abs(PipeClient.get_first_double(self.cli.send_command("GETPOSF1.1")) - 1.1) > 0.1):
             time.sleep(1)
             buf += 1
             if buf > 20:
                 print("focus error")
                 break
+        """
         self.cli.send_command("AUTFOC")
         f1 = 1
         f2 = 2
@@ -55,12 +58,17 @@ class MicroscopeDriver(MicroscopeDriverInterface):
         Has small protection by only setting height between 3500 and 6500 µm
             Need to add saftey checks to make sure things don't run into each other
         """
-        try:
-            if -7000 <= height <= 3000:
-                self.cli.send_command(f'SETZ{height}')
-                """ check if auto focus is on """
-        except:
-            print("Already in Focus!")
+        if -7000 <= height <= 3000:
+                self.cli.send_command(f'SETZ{height/1000}')
+                while(abs(PipeClient.get_first_double(self.cli.send_command("GETZ")) - height/1000) > 0.01):
+                    time.sleep(1)
+                    buf += 1
+                    if buf > 60:
+                        print("error")
+                        sys.exit()
+        else:
+            print("hieght out of range\n")
+            return
 
     def get_z_height(self):
         height = PipeClient.get_first_double(self.cli.send_command('GETZ'))
