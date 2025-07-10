@@ -66,6 +66,9 @@ scan_area_path = os.path.join(SCAN_DIRECTORY, "scan_area_map.png")
     magnification=MAGNIFICATION,
     chip_thickness=CHIP_THICKNESS,
 )
+"""
+create pipe clinent and establish connection
+"""
 
 # Create the Scan Directory and save the flatfield and the meta.json
 if os.path.exists(SCAN_DIRECTORY):
