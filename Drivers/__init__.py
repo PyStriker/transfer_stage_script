@@ -7,3 +7,4 @@ from .Interfaces.Microscope_Interface import (
     MicroscopeDriverInterface,
 )
 from .Interfaces.Camera_Interface import CameraDriverInterface
+from .PipeClient import PipeClient

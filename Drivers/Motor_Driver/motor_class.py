@@ -1,30 +1,20 @@
-import os
+import os, time
 from Drivers.Interfaces.Motor_Interface import MotorDriverInterface
 from ctypes import *
-import sys, command_server
-
-file_path = os.path.dirname(__file__)
-try:
-    dll_dir = os.path.join(file_path, "DLL_Files")
-    dll_folders = os.listdir(dll_dir)
-    dll_folder = [
-        folder for folder in dll_folders if folder.startswith("TangoDLL_64bit_V")
-    ][0]
-except:
-    raise ValueError("No Tango DLL found, Check the DLL_Files folder")
-
-dll_path = os.path.join(dll_dir, dll_folder, "Tango_DLL.dll")
-
+import sys, Drivers.PipeClient as PipeClient
 
 class MotorDriver(MotorDriverInterface):
     """
     controls the HQ transfer stage motors
     """
 
-    def __init__(self, cli: command_server.PipeClient):
+    def __init__(self, cli: PipeClient.PipeClient):
 
         self.cli = cli
-        self.cli.connect()
+
+        self.abs_move(0,0)
+        def_z = -0.34398
+        self.set_z_height(def_z)
 
         """ calibrate everything to defaults """
 
@@ -35,8 +25,8 @@ class MotorDriver(MotorDriverInterface):
         Returns the Current Position
         """
         # query actual position (4 axes) (unit depends on GetDimensions)
-        x = command_server.get_first_double(self.cli.send_command('GETPOSX'))
-        y = command_server.get_first_double(self.cli.send_command('GETPOSY'))
+        x = PipeClient.get_first_double(self.cli.send_command('GETPOSX'))
+        y = PipeClient.get_first_double(self.cli.send_command('GETPOSY'))
 
         return (x, y)
 
@@ -44,21 +34,29 @@ class MotorDriver(MotorDriverInterface):
         """
         moves to an absolute position, checks for max_y and max_y\n
         """
-        moveX = c_double(x)
-        moveY = c_double(y)
+        moveX = x
+        moveY = y
         wait_for_finish = c_bool(wait_for_finish)
+        buf = 0
 
-        error = self.cli.send_command(f'SETPOSX{moveX}')
-        if error > 0:
-            print("Error: abs_move " + str(error))
-            sys.exit()
-        error = self.cli.send_command(f'SETPOSY{moveY}')
-        if error > 0:
-            print("Error: abs_move " + str(error))
-            sys.exit()
-        else:
-            if not silent:
-                print(f"Moved to {x}, {y} (Absolut)")
+        self.cli.send_command(f'SETPOSX{moveX}')
+        while(abs(PipeClient.get_first_double(self.cli.send_command("GETPOSX")) - float(moveX)) > 0.01):
+            time.sleep(1)
+            buf += 1
+            if buf > 60:
+                print("error")
+                sys.exit()
+       
+        self.cli.send_command(f'SETPOSY{moveY}')
+        while(abs(PipeClient.get_first_double(self.cli.send_command("GETPOSY")) - float(moveY)) > 0.01):
+            time.sleep(1)
+            buf += 1
+            if buf > 60:
+                print("error")
+                sys.exit()
+        
+        if not silent:
+            print(f"Moved to {x}, {y} (Absolut)")
 
     def rel_move(self, dx, dy, silent: bool = True):
         """
@@ -69,18 +67,46 @@ class MotorDriver(MotorDriverInterface):
 
         move_dx = c_double(dx)
         move_dy = c_double(dy)
-        x = command_server.get_first_double(self.cli.send_command('GETPOSX')) + move_dx
-        y = command_server.get_first_double(self.cli.send_command('GETPOSY')) + move_dy
+        x = PipeClient.get_first_double(self.cli.send_command('GETPOSX')) + move_dx
+        y = PipeClient.get_first_double(self.cli.send_command('GETPOSY')) + move_dy
+        buf = 0
 
-        error = self.cli.send_command(f'SETPOSX{x}')
-        if error > 0:
-            print("Error: rel_move " + str(error))
-            sys.exit()
-        error = self.cli.send_command(f'SETPOSY{y}')
-        if error > 0:
-            print("Error: rel_move " + str(error))
-            sys.exit()
+        self.cli.send_command(f'SETPOSX{x}')
+        while(abs(PipeClient.get_first_double(self.cli.send_command("GETPOSX")) - x) > 0.01):
+            time.sleep(1)
+            buf += 1
+            if buf > 60:
+                print("error")
+                sys.exit()
+        
+        self.cli.send_command(f'SETPOSY{y}')
+        while(abs(PipeClient.get_first_double(self.cli.send_command("GETPOSY")) - y) > 0.01):
+            time.sleep(1)
+            buf += 1
+            if buf > 60:
+                print("error")
+                sys.exit()
+       
+        if not silent:
+            print(f"Moved by {dx}, {dy} (Rel)")
+        return True
+    
+    def set_z_height(self, height):
+        """
+        Sets the Height in µm\n
+        Only works if the AF is not on\n
+        Has small protection by only setting height between 3500 and 6500 µm
+            Need to add saftey checks to make sure things don't run into each other
+        """
+        buf = 0
+        if -7000 <= height <= 3000:
+                self.cli.send_command(f'SETZ{height/1000}')
+                while(abs(PipeClient.get_first_double(self.cli.send_command("GETZ")) - height/1000) > 0.01):
+                    time.sleep(1)
+                    buf += 1
+                    if buf > 60:
+                        print("error")
+                        sys.exit()
         else:
-            if not silent:
-                print(f"Moved by {dx}, {dy} (Rel)")
-            return True
+            print("hieght out of range\n")
+            return

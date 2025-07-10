@@ -13,7 +13,7 @@ from Drivers import (
 )
 
 import Utils.conversion_functions as conversion
-from GMMDetector.structures import Flake
+from GMM.Model.GMMDetector.structures import Flake
 
 
 def load_all_detection_parameters(

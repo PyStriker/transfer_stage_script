@@ -4,7 +4,7 @@ import time
 
 import cv2
 import numpy as np
-from GMMDetector import MaterialDetector
+from GMM.Model import GMMDetector as MaterialDetector
 from skimage.morphology import disk
 
 from Utils.etc_functions import fallback_convert, sorted_alphanumeric
