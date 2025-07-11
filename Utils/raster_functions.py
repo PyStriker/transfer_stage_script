@@ -62,7 +62,7 @@ def raster_plate_low_magnification(
         camera_settings (dict): The settings of the camera
         microscope_settings (dict): The settings of the microscope
 
-        
+        um/px ratios when in focus
         5X: 0.69789
         10X: 0.34886
         20X: 0.17436
@@ -72,22 +72,16 @@ def raster_plate_low_magnification(
         Tuple[str, str]: The path to the image directory and the path to the metadata directory
     """
 
-    # real x view field : 5.9048 mm
-    # real y view field : 3.6905 mm
-    # => 18.1 % x-overlap
-    # => 10.7 % y-overlap
-    # => 21 rows
-    # => 31 columns
 
     X_STEP = .7
     Y_STEP = .5
     WAIT_TIME = 0.2
-    MAGNIFICATION = 2.5
+    MAGNIFICATION = 5
     X_MAX = 2
     Y_MAX = 2
 
-    ROWS = 2*X_MAX/X_STEP
-    COLUMNS = 2*Y_MAX/Y_STEP
+    ROWS = int(2*X_MAX/X_STEP)
+    COLUMNS = int(2*Y_MAX/Y_STEP)
     NUM_IMAGES = ROWS * COLUMNS
 
     _, image_dir, metadata_dir = _create_folder_structure(scan_directory, MAGNIFICATION)
@@ -157,7 +151,7 @@ def image_generator(
     microscope_settings: dict,
     view_field_x: float = 0.7380,
     view_field_y: float = 0.4613,
-    magnification_index: int = 3,
+    magnification_index: int = 2,
     wait_time: float = 0.1,
 ) -> Generator[Tuple[Optional[np.ndarray], Optional[np.ndarray]], None, None]:
     """
@@ -222,7 +216,7 @@ def image_generator(
             row = reversed(row)
 
         for x_idx in row:
-            # Dont scan anything is the areamap is 0 as only 1s are beeing scanned
+            # Dont scan anything in the areamap that is 0 as only 1s are beeing scanned
             if scan_area_map[y_idx, x_idx] == 0:
                 continue
 
@@ -233,7 +227,7 @@ def image_generator(
                 continue
 
             # move to the new Position
-            motor_driver.abs_move(x_pos, y_pos)
+            motor_driver.abs_move(x_pos/100, y_pos/100)
 
             # Yields the Image
             yield image, all_props

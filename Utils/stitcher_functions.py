@@ -111,8 +111,6 @@ def compress_images(
 def stitch_image(
 
     picture_directory: str,
-    x_rows: int = 6,
-    y_rows: int = 8,
     x_pix_offset: int = 403,
     y_pix_offset: int = 273,
 ):
@@ -124,6 +122,17 @@ def stitch_image(
 
     # getting all the pictures in the directory sorted!
     pic_files = sorted_alphanumeric(os.listdir(picture_directory))
+
+    X_STEP = .7
+    Y_STEP = .5
+    WAIT_TIME = 0.2
+    MAGNIFICATION = 5
+    X_MAX = 2
+    Y_MAX = 2
+
+    x_rows = int(2*X_MAX/X_STEP)
+    y_rows = int(2*Y_MAX/Y_STEP)
+    NUM_IMAGES = x_rows * y_rows
 
     full_pic_arr_y = [None] * x_rows
     full_pic = None

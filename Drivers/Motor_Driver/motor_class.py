@@ -13,13 +13,31 @@ class MotorDriver(MotorDriverInterface):
         self.cli = cli
 
         self.abs_move(0,0)
-        def_z = -0.34398
+        def_z = 2151.587 #for 90nm
         self.set_z_height(def_z)
 
         """ calibrate everything to defaults """
 
     
-
+    def set_z_height(self, height):
+        """
+        Sets the Height in µm\n
+        Only works if the AF is not on\n
+        Has small protection by only setting height between 3500 and 6500 µm
+            Need to add saftey checks to make sure things don't run into each other
+        """
+        if -7000 <= height <= 3000:
+                self.cli.send_command(f'SETPOSZ{height/1000}')
+                while(abs(PipeClient.get_first_double(self.cli.send_command("GETZ")) - height/1000) > 0.01):
+                    time.sleep(1)
+                    buf += 1
+                    if buf > 60:
+                        print("error")
+                        sys.exit()
+        else:
+            print("hieght out of range\n")
+            return
+        
     def get_pos(self):
         """
         Returns the Current Position

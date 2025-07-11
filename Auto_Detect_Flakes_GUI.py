@@ -37,6 +37,9 @@ USE_AUTO_AF: bool = parameter_dict["use_auto_AF"]
 SERVER_URL: str = parameter_dict["server_url"]
 SCAN_DIRECTORY_ROOT: str = parameter_dict["image_directory"]
 
+#Scan region constants:
+
+
 # Created Metadict
 META_DICT = {
     **parameter_dict,
@@ -83,6 +86,8 @@ while not client.connect():
         print("connection unsuccessful\n")
         sys.exit()
 print("Connection successful")    
+
+client.send_command("SETPOSZ-2")
 
 # Driver Initialization
 motor_driver = MotorDriver(client)

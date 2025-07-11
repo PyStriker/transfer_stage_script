@@ -59,6 +59,6 @@ def mark_flake(image, flake_mask):
 
     rotated_rect = cv2.minAreaRect(flake_countour)
     points = cv2.boxPoints(rotated_rect)
-    marked_image = cv2.polylines(marked_image, [np.int0(points)], True, (0, 255, 0), 2)
+    marked_image = cv2.polylines(marked_image, [np.intp(points)], True, (0, 255, 0), 2)
 
     return marked_image

@@ -19,7 +19,7 @@ class MicroscopeDriver(MicroscopeDriverInterface):
         Auto focuses objective
         """
         self.lamp_on()
-        self.set_lamp_voltage(6.4)
+        self.set_lamp_voltage(50)
         self.set_mag(1)
         buf = 0
         """
@@ -59,7 +59,7 @@ class MicroscopeDriver(MicroscopeDriverInterface):
             Need to add saftey checks to make sure things don't run into each other
         """
         if -7000 <= height <= 3000:
-                self.cli.send_command(f'SETZ{height/1000}')
+                self.cli.send_command(f'SETPOSZ{height/1000}')
                 while(abs(PipeClient.get_first_double(self.cli.send_command("GETZ")) - height/1000) > 0.01):
                     time.sleep(1)
                     buf += 1
@@ -97,13 +97,12 @@ class MicroscopeDriver(MicroscopeDriverInterface):
 
     def set_mag(self, mag_idx: int):
         """
-        Swaps the Position of the Nosepiece\n
-        Automatically sets the Height\n
-        1 : 2.5x 5500µm\n
-        2 : 5x 4300µm\n
-        3 : 20x 3930µm\n
-        4 : 50x 3900µm\n
-        5 : 100x 3900µm\n
+        obj fovs and um/px ratios
+        1 : 5x x: 1325µm, y: 857.4µm, 0.69789µm/px
+        2 : 10x x: 662.5µm, y: 428.7µm, 0.34886µm/px
+        3 : 20x x: 331.3µm, y: 214.4µm, 0.17436µm/px
+        4 : 40x x: 165.7µm, y: 107.2µm, 0.079391µm/px
+        5 : 50x x: 132.5µm, y: 85.8µm, 0.063957µm/px
         """
         if 0 < mag_idx < 6:
             self.cli.send_command(f'SETOBJ{mag_idx}')
@@ -144,7 +143,6 @@ class MicroscopeDriver(MicroscopeDriverInterface):
         # pywintypes.com_error: (-2147352567, 'Exception occurred.', (0, 'Nikon.LvMic.ZDrive.1', '', None, 0, -2147352567), None)
         val_dict["nosepiece"] = str(PipeClient.get_first_double(self.cli.send_command('GETPOSR')))
         val_dict["aperture"] = "unknown"; """ no aperture on microscope """
-        self.cli.send_command("LEDPERCENT50")
-        val_dict["light"] = "50%" #PipeClient.get_first_double(self.cli.send_command('GETLED')); """ no get voltage command, GETLED is placeholder"""
+        val_dict["light"] = "unknown" #PipeClient.get_first_double(self.cli.send_command('GETLED')); """ no get voltage command, GETLED is placeholder"""
         return val_dict
 

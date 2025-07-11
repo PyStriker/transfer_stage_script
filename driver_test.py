@@ -1,12 +1,23 @@
-#import Drivers.Camera_Driver as Camera
-import Drivers.Microscope_Driver as Microscope
-import Drivers.Motor_Driver as Motor
-from Drivers import PipeClient as Server
-import time, sys
+import json
+import os
+import shutil
+import sys
+import time
+import cv2
+
+import Utils.conversion_functions as conversion
+import Utils.etc_functions as etc
+import Utils.raster_functions as raster
+import Utils.stitcher_functions as stitcher
+import Utils.upload_functions as uploader
+from Drivers import CameraDriver, MicroscopeDriver, MotorDriver
+from Drivers import PipeClient
+from GMM.Model.GMMDetector import Detector
+from GUI import ParameterPicker
 
 buffer = 0
 #establish pipeclient
-client = Server.PipeClient()
+client = PipeClient()
 
 #connect to transfer stage
 while not client.connect():
@@ -18,35 +29,5 @@ while not client.connect():
         sys.exit()
 print("Connection successful")    
 
-"""
-microscope driver test
-"""
-#initialization
-micro = Microscope(client)
-#
-
-
-"""
-motor driver test
-"""
-#initialization
-motor = Motor(client)
-
-#Get position
-pos = motor.get_pos()
-print(pos)
-
-#absolute move
-    # 2,2
-motor.abs_move(2,2)
-    # 0,0
-motor.abs_move(0,0)
-
-#relative move
-    # 2,2
-motor.rel_move(2,2)
-    # -2,-2
-motor.rel_move(-2,-2)
-"""
-camera driver test
-"""
+client.send_command(f"SETPOSZ{int(-2)}")
+client.send_command(f"SETPOSZ{int(-7)}")

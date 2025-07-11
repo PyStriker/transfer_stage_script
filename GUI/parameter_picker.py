@@ -31,7 +31,7 @@ class ParameterPicker:
         self.scan_save_directory = "C://path/to/the/save/directory"
         self.serverURL = "http://localhost:4999/upload"
         self.scan_name = ""
-        self.scan_user = ""
+        self.scan_user = "eb"
         self.scan_magnification = None
         self.scan_exfoliated_material = None
         self.scan_chip_thickness = None
