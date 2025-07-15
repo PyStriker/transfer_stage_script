@@ -78,7 +78,7 @@ class MicroscopeDriver(MicroscopeDriverInterface):
         self.cli.send_command('LEDON')
 
     def lamp_off(self):
-        self.pipe.send_command('LEDOFF')
+        self.cli.send_command('LEDOFF')
 
     def rotate_nosepiece_forward(self):
         r = PipeClient.get_first_double(self.cli.send_command('GETPOSR'))

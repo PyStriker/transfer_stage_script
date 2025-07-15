@@ -220,8 +220,10 @@ def create_scan_area_map_from_mask(
         labeled_scan_area (NxMx1 Array) : The scan area map
     """
 
-    X_MOTOR_RANGE = 100
-    Y_MOTOR_RANGE = 100
+    WAIT_TIME = 0.2
+    MAGNIFICATION = 5
+    X_MAX = 2
+    Y_MAX = 2
 
     # Load the mask
     # copy the image to make sure not to fuck up a reference
@@ -241,8 +243,8 @@ def create_scan_area_map_from_mask(
     # Create an array which saves the points where we can raster to
     scan_area = np.zeros(
         (
-            int(Y_MOTOR_RANGE / view_field_y),
-            int(X_MOTOR_RANGE / view_field_x),
+            int(Y_MAX / view_field_y),
+            int(X_MAX / view_field_x),
         )
     )
     ctr = 0
@@ -250,10 +252,10 @@ def create_scan_area_map_from_mask(
         for j in range(scan_area.shape[0]):
             ctr += 1
             # Crop to the part of the Image which would be seen by the 20x scope
-            x_start = int(i * x_pixels + x_offset * pixel_resolution_x)
-            y_start = int(j * y_pixels + y_offset * pixel_resolution_y)
-            x_end = int((i + 1) * x_pixels + x_offset * pixel_resolution_x)
-            y_end = int((j + 1) * y_pixels + y_offset * pixel_resolution_y)
+            x_start = int(2 * i * x_pixels + x_offset * pixel_resolution_x) - X_MAX
+            y_start = int(2 * j * y_pixels + y_offset * pixel_resolution_y) - Y_MAX
+            x_end = int(2 * (i + 1) * x_pixels + x_offset * pixel_resolution_x) - X_MAX
+            y_end = int(2 * (j + 1) * y_pixels + y_offset * pixel_resolution_y) - Y_MAX
             crop_arr = mask[y_start:y_end, x_start:x_end]
 
             non_zero_pixels = cv2.countNonZero(crop_arr)

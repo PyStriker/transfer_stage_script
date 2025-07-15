@@ -203,6 +203,9 @@ def image_generator(
 
     num_images = cv2.countNonZero(scan_area_map)
 
+    X_MAX = 2
+    Y_MAX = 2
+
     # Some Default Values
     curr_idx = 0
     image = None
@@ -220,14 +223,14 @@ def image_generator(
             if scan_area_map[y_idx, x_idx] == 0:
                 continue
 
-            x_pos = view_field_x * x_idx
-            y_pos = view_field_y * y_idx
+            x_pos = 2 * (view_field_x * x_idx) - X_MAX
+            y_pos = 2 * (view_field_y * y_idx) - Y_MAX
 
-            if x_pos < 0 or y_pos < 0:
+            if abs(x_pos) > X_MAX or abs(y_pos) > Y_MAX:
                 continue
 
             # move to the new Position
-            motor_driver.abs_move(x_pos/100, y_pos/100)
+            motor_driver.abs_move(x_pos, y_pos)
 
             # Yields the Image
             yield image, all_props
